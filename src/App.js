@@ -45,7 +45,6 @@ class App extends Component {
         memberTyping: {
             member: '',
             typing: false,
-            timeout: 0
         }
     }
 
@@ -72,8 +71,8 @@ class App extends Component {
     subscribeOnRoomMessages() {
         const room = this.drone.subscribe("observable-room");
         room.on('data', (data, member) => {
-            if (data.userTyping) {
-                this.notifyMemberTyping(member.clientData.username);
+            if (typeof data.userTyping == 'boolean') {
+                this.updateMemberTypingState(data.userTyping, member.clientData.username);
                 return;
             }
             const messages = this.state.messages;
@@ -82,21 +81,15 @@ class App extends Component {
         });
     }
 
-    notifyMemberTyping(memberTypingUsername) {
-        const {member, memberTyping} = this.state;
+    updateMemberTypingState(typing, memberTypingUsername) {
+        const {member} = this.state;
         if (member.username === memberTypingUsername) {
             return;
-        }
-        if (memberTyping.timeout) {
-            clearTimeout(memberTyping.timeout);
         }
         this.setState({
             memberTyping: {
                 member: memberTypingUsername,
-                typing: true,
-                timeout: setTimeout(() => {
-                    this.setMemberStoppedTyping();
-                }, 1000)
+                typing,
             }
         });
     }
@@ -127,7 +120,8 @@ class App extends Component {
                 />
                 <Input
                     onSendMessage={this.onSendMessage}
-                    onInputChange={this.onMemberTyping}
+                    onMemberStartTyping={this.notifyMemberStartTyping}
+                    onMemberStopTyping={this.notifyMemberStopTyping}
                 />
             </div>
         );
@@ -140,10 +134,17 @@ class App extends Component {
         });
     }
 
-    onMemberTyping = () => {
+    notifyMemberStartTyping = () => {
         this.drone.publish({
             room: "observable-room",
             message: {userTyping: true}
+        });
+    }
+
+    notifyMemberStopTyping = () => {
+        this.drone.publish({
+            room: "observable-room",
+            message: {userTyping: false}
         });
     }
 

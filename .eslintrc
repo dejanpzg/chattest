@@ -12,7 +12,6 @@
     "comma-dangle": "off",
     "no-console": "off",
     "keyword-spacing": "warn",
-    "max-len": "warn",
     "key-spacing": "error",
     "prefer-const": "error",
     "space-before-function-paren": ["error", "never"],
